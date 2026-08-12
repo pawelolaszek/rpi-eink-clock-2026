@@ -33,37 +33,41 @@ Data are refreshed every minute.
 
 - Install [Raspberry Pi OS](https://www.raspberrypi.org/downloads/) on SD card and boot the system
 - Open a terminal
-- ```python3``` should be already present on Raspberry Pi OS - you may want to verify this by running: ```python3 --version```
-- Enable SPI:
-  - Run the configuration tool: ```sudo raspi-config```
-  - Choose: ```Interfacing Options -> SPI -> Yes```  to enable SPI interface
+- ```python3``` should be already present on Raspberry Pi OS - verify with: ```python3 --version```
+- Enable SPI interface:
+  - Run configuration tool: ```sudo raspi-config```
+  - Select: ```Interface Options -> SPI -> Enable (Yes)```
   - Reboot: ```sudo reboot```
 - Reopen a terminal
 - Update package list: ```sudo apt-get update```
-- Install required libraries and python modules
-  - Install wiringPI: ```sudo apt-get install wiringpi```
-  - Install required Python3 libraries
-    - ```sudo apt-get install python3-pil python3-numpy python3-psutil python3-spidev python3-spidev python3-rpi.gpio```
-  - Install BCM2835 libraries
+- Install required libraries and Python3 modules:
+  - ```sudo apt-get install python3-pil python3-numpy python3-psutil python3-spidev python3-rpi.gpio wiringpi```
+  - Install BCM2835 libraries:
     - ```wget http://www.airspayce.com/mikem/bcm2835/bcm2835-1.68.tar.gz```
     - ```tar zxvf bcm2835-1.68.tar.gz```
     - ```cd bcm2835-1.68/```
     - ```./configure```
     - ```make```
     - ```sudo make install```
-- Go back to home ```cd```
+- Go back to home: ```cd```
 - Install git: ```sudo apt install git```
 - Fetch this project: ```git clone https://github.com/emanueleg/rpi-eink-clock.git```
-- Enter the project directory: ```cd rpi-eink-clock``` and install required libraries and python modules
-- Run the script: ```./epaper-clock.py``` and verify if it works as expected (hit Ctrl-C to exit)
-- If you want the script run at every boot, install this project as service so it could automatically run when Raspberry boots up
-  - copy the epaper-clock systemd unit to the default system directory: ```sudo cp epaper-clock.service /etc/systemd/system/```
-  - verify if service works: ```sudo systemctl start epaper-clock.service```
-  - enable this script so it could be run on system start: ```sudo systemctl enable epaper-clock.service```
-  - reboot device to verify if it works: ```sudo reboot```
-  - if you edit the python script, you can restart the service without rebooting the system: ```sudo systemctl restart epaper-clock.service```
-  - logs can be followed with ```sudo tail -f /var/log/syslog | grep epaper-clock```
-  - startup script can be disabled: ```sudo systemctl disable epaper-clock.service```
+- Enter project directory: ```cd rpi-eink-clock```
+- Run the script: ```./epaper-clock.py``` and verify if it works as expected (press Ctrl+C to exit)
+- Install as a systemd service (optional, to automatically start on boot):
+  - Copy systemd unit file: ```sudo cp epaper-clock.service /etc/systemd/system/```
+  - Start service: ```sudo systemctl start epaper-clock.service```
+  - Enable on startup: ```sudo systemctl enable epaper-clock.service```
+  - Check logs: ```sudo journalctl -u epaper-clock.service -f``` (or ```sudo tail -f /var/log/syslog | grep epaper-clock```)
+  - Restart service after code edits: ```sudo systemctl restart epaper-clock.service```
+  - Disable service: ```sudo systemctl disable epaper-clock.service```
+
+## Troubleshooting
+
+- **`RuntimeError: Cannot find sysfs_software_spi.so`**:
+  - This occurs if SPI is disabled or hardware detection falls back to Jetson Nano mode.
+  - Ensure SPI is enabled via `sudo raspi-config` (`Interface Options -> SPI -> Yes`) and reboot.
+  - Verify that `epdconfig.py` correctly identifies your Raspberry Pi board.
 
 ## License
 
