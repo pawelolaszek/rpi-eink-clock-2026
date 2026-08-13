@@ -45,14 +45,19 @@ class RaspberryPi:
         import RPi.GPIO
 
         self.GPIO = RPi.GPIO
-
-        # SPI device, bus = 0, device = 0
-        self.SPI = spidev.SpiDev(0, 0)
+        self.SPI = spidev.SpiDev()
+        self._spi_opened = False
 
     def digital_write(self, pin, value):
+        # CE0 (BCM 8) is driven by the SPI controller; lgpio will not
+        # allocate it again. Hardware chip-select is enough.
+        if pin == self.CS_PIN:
+            return
         self.GPIO.output(pin, value)
 
     def digital_read(self, pin):
+        if pin == self.CS_PIN:
+            return 0
         return self.GPIO.input(pin)
 
     def delay_ms(self, delaytime):
@@ -64,10 +69,12 @@ class RaspberryPi:
     def module_init(self):
         self.GPIO.setmode(self.GPIO.BCM)
         self.GPIO.setwarnings(False)
-        self.GPIO.setup(self.RST_PIN, self.GPIO.OUT)
-        self.GPIO.setup(self.DC_PIN, self.GPIO.OUT)
-        self.GPIO.setup(self.CS_PIN, self.GPIO.OUT)
+        self.GPIO.setup(self.RST_PIN, self.GPIO.OUT, initial=self.GPIO.HIGH)
+        self.GPIO.setup(self.DC_PIN, self.GPIO.OUT, initial=self.GPIO.HIGH)
         self.GPIO.setup(self.BUSY_PIN, self.GPIO.IN)
+        if not self._spi_opened:
+            self.SPI.open(0, 0)
+            self._spi_opened = True
         self.SPI.max_speed_hz = 4000000
         self.SPI.mode = 0b00
         return 0

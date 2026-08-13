@@ -154,6 +154,7 @@ sudo systemctl disable --now epaper-clock.service
 | Symptom | What to check |
 | --- | --- |
 | `RuntimeError: Cannot find sysfs_software_spi.so` | Outdated `epdconfig.py` mis-detected the board as a Jetson Nano. Use this repo’s `epdconfig.py`, then confirm SPI is enabled and `/dev/spidev0.0` exists. |
+| `lgpio.error: 'GPIO not allocated'` | Bookworm’s `lgpio` will not claim SPI CE0 (BCM 8). Current `epdconfig.py` leaves that pin to the SPI driver. Pull the latest code. |
 | `ModuleNotFoundError: No module named 'RPi'` or GPIO errors on Pi 5 / Bookworm | Install `python3-rpi-lgpio` (not pip `RPi.GPIO`). |
 | `Permission denied` on `/dev/spidev0.0` or GPIO | Add the user to `spi` and `gpio`, then log out and back in. Match `User=` in the systemd unit to that same account. |
 | Blank or unchanged panel | Power off, reseat the HAT, enable SPI, reboot. This driver is for the original 2.7" panel, not the V2. |
