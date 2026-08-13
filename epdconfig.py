@@ -39,6 +39,7 @@ class RaspberryPi:
     DC_PIN          = 25
     CS_PIN          = 8
     BUSY_PIN        = 24
+    PWR_PIN         = 18
 
     def __init__(self):
         import spidev
@@ -69,6 +70,12 @@ class RaspberryPi:
     def module_init(self):
         self.GPIO.setmode(self.GPIO.BCM)
         self.GPIO.setwarnings(False)
+        try:
+            self.GPIO.setup(self.PWR_PIN, self.GPIO.OUT, initial=self.GPIO.HIGH)
+        except Exception:
+            # GPIO 18 may already be in use (PWM audio); the original HAT
+            # is powered from 3.3V even without this pin.
+            pass
         self.GPIO.setup(self.RST_PIN, self.GPIO.OUT, initial=self.GPIO.HIGH)
         self.GPIO.setup(self.DC_PIN, self.GPIO.OUT, initial=self.GPIO.HIGH)
         self.GPIO.setup(self.BUSY_PIN, self.GPIO.IN)

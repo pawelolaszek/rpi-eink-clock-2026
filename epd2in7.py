@@ -152,11 +152,12 @@ class EPD:
     # Hardware reset
     def reset(self):
         epdconfig.digital_write(self.reset_pin, 1)
-        epdconfig.delay_ms(200) 
+        epdconfig.delay_ms(200)
         epdconfig.digital_write(self.reset_pin, 0)
-        epdconfig.delay_ms(10)
+        # Keep LOW short: newer driver HATs cut panel power if RST stays low.
+        epdconfig.delay_ms(2)
         epdconfig.digital_write(self.reset_pin, 1)
-        epdconfig.delay_ms(200)   
+        epdconfig.delay_ms(200)
 
     def send_command(self, command):
         epdconfig.digital_write(self.dc_pin, 0)
@@ -170,10 +171,20 @@ class EPD:
         epdconfig.spi_writebyte([data])
         epdconfig.digital_write(self.cs_pin, 1)
         
-    def ReadBusy(self):        
+    def ReadBusy(self):
         logging.debug("e-Paper busy")
-        while(epdconfig.digital_read(self.busy_pin) == 0):      #  0: idle, 1: busy
-            epdconfig.delay_ms(200)                
+        waited = 0
+        # Original 2.7" panel: LOW = busy
+        while epdconfig.digital_read(self.busy_pin) == 0:
+            epdconfig.delay_ms(200)
+            waited += 200
+            if waited >= 10000:
+                raise RuntimeError(
+                    "e-paper stuck busy (BUSY stayed LOW). "
+                    "Current Waveshare 2.7 inch HATs are usually V2; run with "
+                    "the default V2 driver instead of EPD_PANEL=v1. "
+                    "Also reseat the HAT and confirm SPI is enabled."
+                )
         logging.debug("e-Paper busy release")
 
     def set_lut(self):

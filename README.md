@@ -25,7 +25,7 @@ No network access is required at runtime. The clock starts in clock mode.
 ## Hardware
 
 - Raspberry Pi 3, 4, or 5
-- [Waveshare 2.7inch e-Paper HAT](https://www.waveshare.com/product/raspberry-pi/displays/e-paper/2.7inch-e-paper-hat.htm) (176×264, black/white, original panel — this project uses the `epd2in7` driver, not the V2 panel driver)
+- [Waveshare 2.7inch e-Paper HAT](https://www.waveshare.com/product/raspberry-pi/displays/e-paper/2.7inch-e-paper-hat.htm) (176×264, black/white). Current boards are **V2** (sticker on the back of the panel) and are the default. Original 2019 panels still work with `EPD_PANEL=v1`.
 - 8 GB or larger microSD card
 - Current [Raspberry Pi OS](https://www.raspberrypi.com/software/) (Bookworm or later, 32-bit or 64-bit)
 
@@ -105,6 +105,12 @@ If you already have the repo, `cd` into it and `git pull` instead.
 
 The panel should show the clock. Use the HAT buttons to switch modes. Stop with Ctrl-C.
 
+If the HAT is an original (non-V2) 2.7 inch panel:
+
+```bash
+EPD_PANEL=v1 ./epaper-clock.py
+```
+
 If you see `RuntimeError: Cannot find sysfs_software_spi.so`, you are on an old copy of `epdconfig.py`. Update to this tree: board detection now uses `/proc/device-tree/model` and `/proc/cpuinfo`, because `/sys/bus/platform/drivers/gpiomem-bcm2835` no longer exists on current kernels.
 
 ## Run at boot (systemd)
@@ -157,14 +163,16 @@ sudo systemctl disable --now epaper-clock.service
 | `lgpio.error: 'GPIO not allocated'` | Bookworm’s `lgpio` will not claim SPI CE0 (BCM 8). Current `epdconfig.py` leaves that pin to the SPI driver. Pull the latest code. |
 | `ModuleNotFoundError: No module named 'RPi'` or GPIO errors on Pi 5 / Bookworm | Install `python3-rpi-lgpio` (not pip `RPi.GPIO`). |
 | `Permission denied` on `/dev/spidev0.0` or GPIO | Add the user to `spi` and `gpio`, then log out and back in. Match `User=` in the systemd unit to that same account. |
-| Blank or unchanged panel | Power off, reseat the HAT, enable SPI, reboot. This driver is for the original 2.7" panel, not the V2. |
+| Script hangs in `ReadBusy` / you have to Ctrl-C during `epd.init()` | The panel never went idle. Current HATs are V2 (opposite BUSY polarity from the old driver). Pull this repo (V2 is default). Original panels: `EPD_PANEL=v1`. Also reseat the HAT; a long RST pulse can cut power on newer driver boards. |
+| `e-paper stuck busy` | Same as above; the wait now times out after 10 seconds instead of hanging forever. |
+| Blank or unchanged panel | Power off, reseat the HAT, enable SPI, reboot. Confirm V1 vs V2. |
 | Buttons do nothing | Run as a user in the `gpio` group. Buttons are BCM pins 5, 6, 13, and 19. |
 | systemd starts then exits, or `User=pi` fails | Edit `epaper-clock.service` so `User`/`Group`/`ExecStart` match your home directory. Then `sudo systemctl daemon-reload` and restart. |
 | `externally-managed-environment` from pip | Ignore pip; install libraries with `apt` as above. |
 
 ## License
 
-- Official Waveshare e-paper drivers (`epd2in7.py` and `epdconfig.py`) are MIT License.
+- Official Waveshare e-paper drivers (`epd2in7.py`, `epd2in7_V2.py`, and `epdconfig.py`) are MIT License.
 - The Raspberry Pi logo in `raspberry.bmp` is a trademark of Raspberry Pi Ltd and is used under the [Raspberry Pi trademark rules](https://www.raspberrypi.com/trademark-rules/).
 - Nobel data are provided by Nobel Prize Outreach AB under Creative Commons Zero (CC0). See the [terms of use for api.nobelprize.org](https://www.nobelprize.org/about/terms-of-use-for-api-nobelprize-org-and-data-nobelprize-org/).
 - `FreeMono.ttf` and `FreeMonoBold.ttf` are from [GNU FreeFont](https://www.gnu.org/software/freefont/) (GPL-3.0 or later).

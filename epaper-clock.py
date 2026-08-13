@@ -9,7 +9,6 @@
 ##
 
 
-import epd2in7
 from PIL import Image
 from PIL import ImageFont
 from PIL import ImageDraw
@@ -27,6 +26,14 @@ import json
 import random
 import textwrap
 
+
+# Current Waveshare 2.7" HATs are V2 (label on the back of the panel).
+# Original 2019-era boards: EPD_PANEL=v1 ./epaper-clock.py
+PANEL = os.environ.get('EPD_PANEL', 'v2').lower()
+if PANEL in ('v1', '1', 'epd2in7'):
+    import epd2in7 as epd_driver
+else:
+    import epd2in7_V2 as epd_driver
 
 RES_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'resources/')
 
@@ -70,7 +77,7 @@ class Display:
         with open(NOBELPRIZE_JSON) as f:
             self.nobeldata = json.load(f)
         
-        self.epd = epd2in7.EPD()
+        self.epd = epd_driver.EPD()
         self.epd.init()
         self.read_buttons()
 
